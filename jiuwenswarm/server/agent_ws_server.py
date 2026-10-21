@@ -195,6 +195,7 @@ from jiuwenswarm.runtime.plan import PlanModeController
 from jiuwenswarm.extensions.video_duplex.backend.tasks.server_adapter import VoiceTaskServerAdapter
 from jiuwenswarm.server.runtime.gateway_adapter import (
     AdapterRegistry,
+    BrowserManagementAdapter,
     ConfigAdapter,
     DesignerAdapter,
     ExperienceAdapter,
@@ -207,6 +208,21 @@ from jiuwenswarm.server.runtime.gateway_adapter import (
 from jiuwenswarm.server.runtime.gateway_adapter.config_adapter import (
     reload_runtime_after_config_save,
 )
+
+
+def _build_default_browser_lifecycle():
+    """Construct the managed-Chrome lifecycle for the management RPC adapter.
+
+    Resolves the Chrome binary path the same way the browser sub-agent does;
+    the lifecycle is lazy (no subprocess until ``browser.start``).
+    """
+    from jiuwenswarm.agents.harness.common.browser_config import resolve_chrome_path
+    from jiuwenswarm.agents.swarm.providers.browser_lifecycle import (
+        BrowserConfig,
+        BrowserLifecycle,
+    )
+
+    return BrowserLifecycle(BrowserConfig(chrome_path=resolve_chrome_path({}) or ""))
 
 from jiuwenswarm.server.wire_truncate import (  # noqa: F401  — re-exported for tests / handlers
     _HISTORY_PAGE_SIZE,
@@ -1187,6 +1203,7 @@ class AgentWebSocketServer:
             VoiceTaskServerAdapter(),
             SessionAdapter(),
             ExperienceAdapter(),
+            BrowserManagementAdapter(_build_default_browser_lifecycle()),
             WorkspaceFileAdapter(),
             MemoryAdapter(),
             ProjectAdapter(runtime_probe=self._execution_runtime),
@@ -2162,6 +2179,7 @@ class AgentWebSocketServer:
                     VoiceTaskServerAdapter(),
                     SessionAdapter(),
                     ExperienceAdapter(),
+                    BrowserManagementAdapter(_build_default_browser_lifecycle()),
                     WorkspaceFileAdapter(),
                     MemoryAdapter(),
                     ProjectAdapter(runtime_probe=self._execution_runtime),
