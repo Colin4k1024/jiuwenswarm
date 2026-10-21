@@ -197,6 +197,7 @@ from jiuwenswarm.server.runtime.gateway_adapter import (
     AdapterRegistry,
     ConfigAdapter,
     DesignerAdapter,
+    ExperienceAdapter,
     HarmonyOSAdapter,
     MemoryAdapter,
     ProjectAdapter,
@@ -1185,6 +1186,7 @@ class AgentWebSocketServer:
         for adapter in (
             VoiceTaskServerAdapter(),
             SessionAdapter(),
+            ExperienceAdapter(),
             WorkspaceFileAdapter(),
             MemoryAdapter(),
             ProjectAdapter(runtime_probe=self._execution_runtime),
@@ -2159,6 +2161,7 @@ class AgentWebSocketServer:
                 for adapter in (
                     VoiceTaskServerAdapter(),
                     SessionAdapter(),
+                    ExperienceAdapter(),
                     WorkspaceFileAdapter(),
                     MemoryAdapter(),
                     ProjectAdapter(runtime_probe=self._execution_runtime),
