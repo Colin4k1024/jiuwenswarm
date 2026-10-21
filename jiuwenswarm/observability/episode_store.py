@@ -398,11 +398,17 @@ class EpisodeStore:
         return _row_to_episode(row)
 
     def list_episodes(self, session_id: str) -> list[Episode]:
-        """Return all episodes for a session, oldest first."""
+        """Return all episodes for a session, oldest first.
+
+        Ordered by ``created_at`` with the implicit ``rowid`` as the tiebreaker:
+        two turns finalized within the same millisecond (common on a warm cache)
+        must still surface in insertion order, so ``rowid`` — not the random
+        UUID ``id`` — breaks the tie.
+        """
         conn = self._connect()
         rows = conn.execute(
             f"SELECT {', '.join(_EPISODE_COLUMNS)} FROM episodes "
-            "WHERE session_id = ? ORDER BY created_at ASC, id ASC",
+            "WHERE session_id = ? ORDER BY created_at ASC, rowid ASC",
             (session_id,),
         ).fetchall()
         return [_row_to_episode(row) for row in rows]
