@@ -199,6 +199,26 @@ def test_retrieve_writes_injection_records_once(tmp_path: Path) -> None:
     assert seen.count(exp_id) == 1
 
 
+def test_retrieve_use_count_increments_once_across_turns(tmp_path: Path) -> None:
+    """use_count must advance once per (run_id, experience_id), not per turn.
+
+    A cross-turn re-injection of the same experience for the same run hits the
+    ``UNIQUE(run_id, experience_id)`` constraint (no new row) — use_count must
+    NOT increment again. Guards the P1 where ``rowcount``/``lastrowid`` could
+    not distinguish insert from conflict-update.
+    """
+    store = ExperienceStore(experiences_database_path(workspace=tmp_path))
+    store.ensure()
+    exp_id = _seed_active(
+        store, target=_TARGET, outcome="success", scope="user", ep_ids=("u1", "u2")
+    )
+    retriever = _retriever(tmp_path)
+    base = dict(objective=_TARGET, scope="user", run_id="r1", session_id="s1")
+    retriever.retrieve(RetrievalQuery(turn_id="t1", **base))  # type: ignore[arg-type]
+    retriever.retrieve(RetrievalQuery(turn_id="t2", **base))  # type: ignore[arg-type]
+    assert store.get(exp_id).use_count == 1  # NOT 2
+
+
 # ---------------------------------------------------------------------------
 # Fail-closed
 # ---------------------------------------------------------------------------

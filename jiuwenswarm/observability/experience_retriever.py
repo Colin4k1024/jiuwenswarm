@@ -315,9 +315,20 @@ class ExperienceRetriever:
         now = int(time.time() * 1000)
         records: list[InjectionRecord] = []
         for rank, exp in enumerate(injected, start=1):
-            # Idempotent on (run_id, experience_id): a repeat injection for the
-            # same run is a no-op; use_count increments only on first insert.
-            cur = conn.execute(
+            # Detect first-insert BEFORE the upsert: ``use_count`` must advance
+            # only when the ``(run_id, experience_id)`` row is genuinely new.
+            # SQLite's ``rowcount``/``lastrowid`` after ``INSERT ... ON CONFLICT
+            # DO UPDATE`` report 1 and a non-zero id for both insert and
+            # conflict-update, so they cannot distinguish the two paths.
+            existed = (
+                conn.execute(
+                    "SELECT 1 FROM injection_records "
+                    "WHERE run_id = ? AND experience_id = ?",
+                    (query.run_id, exp.id),
+                ).fetchone()
+                is not None
+            )
+            conn.execute(
                 "INSERT INTO injection_records "
                 "(run_id, session_id, experience_id, version, rank, score, scope_level, injected_at) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
@@ -347,8 +358,7 @@ class ExperienceRetriever:
                     injected_at=now,
                 )
             )
-            # use_count++ on first insert only (changes() == 1).
-            if cur.rowcount == 1 and cur.lastrowid:
+            if not existed:
                 conn.execute(
                     "UPDATE experiences SET use_count = use_count + 1 WHERE id = ?",
                     (exp.id,),
