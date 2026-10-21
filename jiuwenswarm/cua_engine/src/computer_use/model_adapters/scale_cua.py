@@ -58,7 +58,9 @@ _TYPE_TO_ACTION: dict[str, str] = {
     "press": "press",
     "scroll": "scroll",
     "wait": "wait",
-    "screenshot": "screenshot",
+    # The cua action space has no "screenshot": the loop re-observes every
+    # turn, so a model screenshot request maps to a benign wait.
+    "screenshot": "wait",
     "cursor_position": "mouse_move",
     "mouse_move": "mouse_move",
     "finished": "finished",
