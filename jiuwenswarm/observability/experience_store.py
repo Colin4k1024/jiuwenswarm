@@ -367,10 +367,16 @@ class ExperienceStore:
         return _row_to_experience(row) if row is not None else None
 
     def list_experiences(self) -> list[Experience]:
-        """Return all experiences, newest first."""
+        """Return all experiences, newest first.
+
+        Ordered by ``created_at`` with the implicit ``rowid`` as the tiebreaker,
+        mirroring :meth:`EpisodeStore.list_episodes`: two experiences stamped in
+        the same mining-pass millisecond surface in insertion order, not by the
+        random UUID ``id``.
+        """
         rows = self._connect().execute(
             f"SELECT {', '.join(_EXPERIENCE_COLUMNS)} FROM experiences "
-            "ORDER BY created_at DESC, id ASC"
+            "ORDER BY created_at DESC, rowid DESC"
         ).fetchall()
         return [_row_to_experience(row) for row in rows]
 
