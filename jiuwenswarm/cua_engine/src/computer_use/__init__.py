@@ -17,6 +17,14 @@ from .actions import (
     Outcome,
     is_retryable,
 )
+from .input_owner import (
+    FrozenSessionIdentity,
+    IdentityForged,
+    InputBusy,
+    InputOwnerLock,
+    ObservationTicket,
+    WindowIdentity,
+)
 from .types import (
                     ActionResult,
                     AppInfo,
@@ -40,4 +48,5 @@ __all__ = [
     'ScrollDirection', 'ClickOptions', 'DragOptions', 'TypeTextOptions', 'ElementMatch', 'ElementPath', 'ReadOptions',
     'DesktopReadOptions', 'ElementReadOptions', 'ReadTextOptions', 'FindOptions',
     'COMPUTER_USE_ACTIONS', 'Action', 'Decision', 'ModelPort', 'Outcome', 'is_retryable', 'CoordinateMismatch',
+    'FrozenSessionIdentity', 'WindowIdentity', 'InputOwnerLock', 'ObservationTicket', 'InputBusy', 'IdentityForged',
 ]
