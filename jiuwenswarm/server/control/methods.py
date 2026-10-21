@@ -52,6 +52,18 @@ CONTROL_EXPERIENCE_METHODS = frozenset(
     }
 )
 
+# Managed-Chrome lifecycle + management (browser-use slice 2c).
+CONTROL_BROWSER_METHODS = frozenset(
+    {
+        ReqMethod.BROWSER_STATUS.value,
+        ReqMethod.BROWSER_START.value,
+        ReqMethod.BROWSER_STOP.value,
+        ReqMethod.BROWSER_RESTART.value,
+        ReqMethod.BROWSER_CONFIG.value,
+        ReqMethod.BROWSER_OPEN.value,
+    }
+)
+
 ALL_CONTROL_METHODS = (
     CONTROL_HEALTH_METHODS
     | CONTROL_SESSION_METHODS
@@ -59,4 +71,5 @@ ALL_CONTROL_METHODS = (
     | CONTROL_CONFIG_METHODS
     | CONTROL_HISTORY_METHODS
     | CONTROL_EXPERIENCE_METHODS
+    | CONTROL_BROWSER_METHODS
 )

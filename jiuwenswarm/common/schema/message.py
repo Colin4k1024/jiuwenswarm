@@ -526,6 +526,14 @@ class ReqMethod(Enum):
     EXPERIENCES_LIST = "experiences.list"
     INJECTIONS_ATTRIBUTION = "injections.attribution"
 
+    # Managed-Chrome lifecycle + management RPCs (browser-use slice 2c).
+    BROWSER_STATUS = "browser.status"
+    BROWSER_START = "browser.start"
+    BROWSER_STOP = "browser.stop"
+    BROWSER_RESTART = "browser.restart"
+    BROWSER_CONFIG = "browser.config"
+    BROWSER_OPEN = "browser.open"
+
 
 class EventType(Enum):
     SESSION_ARCHIVED = "session.archived"

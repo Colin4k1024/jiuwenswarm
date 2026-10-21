@@ -35,6 +35,7 @@ __all__ = [
     "ConfigAdapter",
     "DesignerAdapter",
     "ExperienceAdapter",
+    "BrowserManagementAdapter",
 ]
 
 _EXPORTS = {
@@ -48,6 +49,7 @@ _EXPORTS = {
     "ConfigAdapter": "jiuwenswarm.server.runtime.gateway_adapter.config_adapter",
     "DesignerAdapter": "jiuwenswarm.server.runtime.gateway_adapter.designer_adapter",
     "ExperienceAdapter": "jiuwenswarm.server.runtime.gateway_adapter.experience_adapter",
+    "BrowserManagementAdapter": "jiuwenswarm.server.runtime.gateway_adapter.browser_management_adapter",
 }
 
 
