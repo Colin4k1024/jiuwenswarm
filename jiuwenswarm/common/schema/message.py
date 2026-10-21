@@ -520,6 +520,12 @@ class ReqMethod(Enum):
     ISSUE_DELETE = "issue.delete"
     ISSUE_MATRIX = "issue.matrix"
 
+    # Experience-memory visualization (read-only). Backed by the EpisodeStore /
+    # ExperienceStore / Retriever layer under observability.
+    EPISODES_LIST = "episodes.list"
+    EXPERIENCES_LIST = "experiences.list"
+    INJECTIONS_ATTRIBUTION = "injections.attribution"
+
 
 class EventType(Enum):
     SESSION_ARCHIVED = "session.archived"

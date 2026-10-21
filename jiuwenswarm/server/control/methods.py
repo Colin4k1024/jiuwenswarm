@@ -43,10 +43,20 @@ CONTROL_CONFIG_METHODS = frozenset(
 
 CONTROL_HISTORY_METHODS = frozenset({ReqMethod.HISTORY_GET.value})
 
+# Experience-memory visualization (read-only): episodes/experiences/injections.
+CONTROL_EXPERIENCE_METHODS = frozenset(
+    {
+        ReqMethod.EPISODES_LIST.value,
+        ReqMethod.EXPERIENCES_LIST.value,
+        ReqMethod.INJECTIONS_ATTRIBUTION.value,
+    }
+)
+
 ALL_CONTROL_METHODS = (
     CONTROL_HEALTH_METHODS
     | CONTROL_SESSION_METHODS
     | CONTROL_PROJECT_METHODS
     | CONTROL_CONFIG_METHODS
     | CONTROL_HISTORY_METHODS
+    | CONTROL_EXPERIENCE_METHODS
 )
