@@ -8,6 +8,15 @@ __version__ = "0.0.1"
 
 from .client.computer import App, Computer, Element
 from .errors import ComputerUseError
+from .actions import (
+    COMPUTER_USE_ACTIONS,
+    Action,
+    CoordinateMismatch,
+    Decision,
+    ModelPort,
+    Outcome,
+    is_retryable,
+)
 from .types import (
                     ActionResult,
                     AppInfo,
@@ -29,5 +38,6 @@ from .types import (
 __all__ = [
     'Computer', 'App', 'Element', 'ComputerUseError', 'Observation', 'AppInfo', 'ActionResult', 'TextPage',
     'ScrollDirection', 'ClickOptions', 'DragOptions', 'TypeTextOptions', 'ElementMatch', 'ElementPath', 'ReadOptions',
-    'DesktopReadOptions', 'ElementReadOptions', 'ReadTextOptions', 'FindOptions'
+    'DesktopReadOptions', 'ElementReadOptions', 'ReadTextOptions', 'FindOptions',
+    'COMPUTER_USE_ACTIONS', 'Action', 'Decision', 'ModelPort', 'Outcome', 'is_retryable', 'CoordinateMismatch',
 ]
