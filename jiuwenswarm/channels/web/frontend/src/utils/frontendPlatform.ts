@@ -10,6 +10,7 @@ export type SidebarNavKey =
   | 'cron'
   | 'personalContext'
   | 'personalContextSettings'
+  | 'experienceMemory'
   | 'settings'
   | 'updatepanel'
   | 'experiments';
