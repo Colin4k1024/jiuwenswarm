@@ -53,6 +53,11 @@ CONTROL_EXPERIENCE_METHODS = frozenset(
 )
 
 # Managed-Chrome lifecycle + management (browser-use slice 2c).
+# NOTE: these are NOT in ALL_CONTROL_METHODS on purpose. They are served by the
+# AgentServer adapter registry (BrowserManagementAdapter / ExperienceAdapter),
+# which lives on the non-control dispatch path (like harness.*) — putting them
+# in ALL_CONTROL_METHODS would route them to the Front control dispatch, which
+# has no branch for them and returns "unsupported control method".
 CONTROL_BROWSER_METHODS = frozenset(
     {
         ReqMethod.BROWSER_STATUS.value,
@@ -70,6 +75,4 @@ ALL_CONTROL_METHODS = (
     | CONTROL_PROJECT_METHODS
     | CONTROL_CONFIG_METHODS
     | CONTROL_HISTORY_METHODS
-    | CONTROL_EXPERIENCE_METHODS
-    | CONTROL_BROWSER_METHODS
 )

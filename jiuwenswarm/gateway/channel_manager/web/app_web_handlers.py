@@ -5994,6 +5994,21 @@ def _register_web_handlers(bind: WebHandlersBindParams) -> None:
     _register_harness("harness.deactivate", _HarnessReq.HARNESS_PACKAGES_DEACTIVATE)
     _register_harness("harness.delete", _HarnessReq.HARNESS_PACKAGES_DELETE)
 
+    # Experience-memory visualization (slice 12b) + managed-Chrome lifecycle
+    # (slice 2c): forward to the AgentServer adapter registry
+    # (ExperienceAdapter / BrowserManagementAdapter) over the same E2A proxy
+    # path as harness.*, so the gateway WebChannel WS no longer returns
+    # METHOD_NOT_FOUND for these methods.
+    _register_harness("episodes.list", _HarnessReq.EPISODES_LIST)
+    _register_harness("experiences.list", _HarnessReq.EXPERIENCES_LIST)
+    _register_harness("injections.attribution", _HarnessReq.INJECTIONS_ATTRIBUTION)
+    _register_harness("browser.status", _HarnessReq.BROWSER_STATUS)
+    _register_harness("browser.start", _HarnessReq.BROWSER_START)
+    _register_harness("browser.stop", _HarnessReq.BROWSER_STOP)
+    _register_harness("browser.restart", _HarnessReq.BROWSER_RESTART)
+    _register_harness("browser.config", _HarnessReq.BROWSER_CONFIG)
+    _register_harness("browser.open", _HarnessReq.BROWSER_OPEN)
+
     # RSI 优化平台 18 个 web method（web 契约 v0.3 §4）：经 E2A 转发到 AgentServer。
     # 与 harness.* 同构（仅注册 + proxy_unary_request，不承载业务）。
     rsi_methods = [
