@@ -56,7 +56,8 @@
     "settings": "Settings",
     "logs": "Logs",
     "update": "Updates",
-    "personalContext": "Knowledge"
+    "personalContext": "Knowledge",
+    "experienceMemory": "Experience"
   },
   "applicationPlugins": {
     "title": "Application plugins",

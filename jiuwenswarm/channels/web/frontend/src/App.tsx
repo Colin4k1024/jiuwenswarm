@@ -36,6 +36,7 @@ import { ToolPanel } from './components/ToolPanel';
 import { UpdatePanel } from './components/UpdatePanel';
 import type { ExternalCliInstallStatuses } from './components/ExternalCliInstallDialog';
 import { PersonalContextPanel } from './components/PersonalContext';
+import { ExperienceMemoryPanel } from './components/ExperienceMemoryPanel';
 import { LoadingSpinner, ToastStack, toast } from './components/ui';
 import { SettingsPage } from './features/settings/SettingsPage';
 import type { SettingsPageDefinition } from './features/settings/registry/types';
@@ -469,6 +470,7 @@ function AppContent({
     useState<Partial<Record<ExternalCliAgentKind, ExternalCliDetectResult>>>({});
   const [hasVisitedSkills, setHasVisitedSkills] = useState(false);
   const [hasVisitedPersonalContext, setHasVisitedPersonalContext] = useState(false);
+  const [hasVisitedExperienceMemory, setHasVisitedExperienceMemory] = useState(false);
   const [requestedSettingsModuleId, setRequestedSettingsModuleId] = useState<SettingsModuleTarget | null>(null);
   const {
     isMobile,
@@ -3787,6 +3789,7 @@ function AppContent({
       if (nav === 'agents') setHasVisitedAgents(true);
       if (nav === 'skills') setHasVisitedSkills(true);
       if (nav === 'personalContext') setHasVisitedPersonalContext(true);
+      if (nav === 'experienceMemory') setHasVisitedExperienceMemory(true);
       if (nav === 'design') {
         setTeamAreaExpanded(false);
         setToolPanelHidden(true);
@@ -4564,6 +4567,11 @@ const showWorkspaceDivider = effectiveTeamAreaExpanded && !showConversationNotFo
                 onSymphonyEnabledChange={saveSymphonyEnabled}
                 onNavigateToSettings={() => requestSettingsModule('agent')}
             />
+          </div>
+        )}
+        {hasVisitedExperienceMemory && (
+          <div className={`app-section ${activeNav === 'experienceMemory' ? '' : 'is-hidden'}`}>
+            <ExperienceMemoryPanel />
           </div>
         )}
         {activeNav === 'connectorMarket' && (

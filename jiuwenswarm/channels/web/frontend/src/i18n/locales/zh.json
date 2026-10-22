@@ -56,7 +56,8 @@
     "settings": "设置",
     "logs": "日志",
     "update": "更新",
-    "personalContext": "知识"
+    "personalContext": "知识",
+    "experienceMemory": "经验记忆"
   },
   "applicationPlugins": {
     "title": "应用插件",
