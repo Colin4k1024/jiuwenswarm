@@ -1,7 +1,7 @@
-"""Generative UI 工具: agent 主动推送沙箱 iframe artifact 到 web 频道.
+"""Generative UI tool: push sandboxed iframe artifacts to the web channel.
 
-对齐 OpenIntelligentUI ``generateSandboxedUi`` 的 6 参数固定契约.
-每次调用生成独立 ``artifact_id``, 不支持跨调用 patch.
+Aligns with OpenIntelligentUI ``generateSandboxedUi`` 6-parameter contract.
+Each call generates an independent ``artifact_id``; no cross-call patch.
 """
 
 from __future__ import annotations
@@ -16,10 +16,10 @@ from jiuwenswarm.common.schema.message import GenerativeUIArtifactPayload
 
 
 def _get_current_session() -> Any:
-    """从当前 harness 上下文取 session.
+    """Get the current harness session.
 
-    使用 openjiuwen 提供的 ``get_current_session`` 全局访问器
-    (与 ``wiki_tools.py`` 等工具内获取 session 的模式一致).
+    Uses ``openjiuwen.core.session.get_current_session`` (consistent with
+    ``wiki_tools.py`` and other tools that need session access).
     """
     from openjiuwen.core.session import get_current_session
 
@@ -40,17 +40,17 @@ async def emit_generative_ui(
     """Push a sandboxed interactive UI artifact (HTML/CSS/JS) to the web channel.
 
     Args:
-        initial_height: iframe 初始高度 (px).
-        placeholder_messages: iframe 加载期间父页占位文案列表.
-        css: 注入 <style> 的 CSS 文本.
-        html: 注入 <body> 的 HTML 文本.
-        js_functions: 命名函数定义 (作为客户端脚本库).
-        js_expressions: 顶层执行的表达式.
-        title: artifact 标题 (可选).
-        description: artifact 描述 (可选).
+        initial_height: iframe initial height in pixels.
+        placeholder_messages: placeholder text shown while the iframe loads.
+        css: CSS text injected into ``<style>``.
+        html: HTML text injected into ``<body>``.
+        js_functions: named function definitions (client-side script library).
+        js_expressions: top-level expressions to execute.
+        title: optional artifact title.
+        description: optional artifact description.
 
     Returns:
-        简短确认字符串, 包含 artifact_id.
+        A short confirmation string containing the artifact_id.
     """
     artifact_id = str(uuid.uuid4())
     payload = GenerativeUIArtifactPayload(

@@ -627,8 +627,16 @@ def build_xiaoyi_phone(params: dict[str, Any], ctx: SwarmBuildContext) -> list[A
     description="Generative UI tool (built only when A2UI channel is enabled).",
 )
 def build_generative_ui_tools(params: dict[str, Any], ctx: SwarmBuildContext) -> list[Any]:
-    """Build the generative UI tool."""
-    return _filter_whitelist([emit_generative_ui])
+    """Build the generative UI tool, gated by A2UI channel + config."""
+    from jiuwenswarm.server.runtime.a2ui.integration import is_a2ui_channel
+    from jiuwenswarm.server.runtime.a2ui.config import get_current_a2ui_config
+
+    channel = getattr(ctx, "channel_id", None)
+    if not is_a2ui_channel(channel):
+        return []
+    if not get_current_a2ui_config().enabled:
+        return []
+    return _filter_whitelist(_mark_stateless([emit_generative_ui]))
 
 
 @harness_element(
