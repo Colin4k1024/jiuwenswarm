@@ -19,8 +19,11 @@ export function buildSandboxDocument(payload: GenerativeUIArtifactPayload): stri
 
   const hostBridgeScript = HOST_BRIDGE_CLIENT_SCRIPT.replace('__ARTIFACT_ID__', artifact_id);
 
+  // Only escape closing sequences in raw-text contexts (style/script).
+  // html is inserted into <body> and parsed as HTML, not raw text, so
+  // escaping </script> would corrupt valid payloads like
+  // <textarea></script></textarea> or inline <script>...</script> blocks.
   const safeCss = escapeClosingSequences(css, 'style');
-  const safeHtml = escapeClosingSequences(html, 'script');
   const safeJsFunctions = escapeClosingSequences(js_functions, 'script');
   const safeJsExpressions = escapeClosingSequences(js_expressions, 'script');
 
@@ -31,7 +34,7 @@ export function buildSandboxDocument(payload: GenerativeUIArtifactPayload): stri
     <meta http-equiv="Content-Security-Policy" content="${GENERATIVE_UI_CSP}">
     <style>${safeCss}</style>
   </head>
-  <body>${safeHtml}</body>
+  <body>${html}</body>
   <script>${hostBridgeScript}</script>
   <script>${safeJsFunctions}</script>
   <script>${safeJsExpressions}</script>

@@ -78,7 +78,7 @@ test('buildSandboxDocument includes all 6 fixed parameters', () => {
   assert.ok(doc.includes('test-artifact-1'));
 });
 
-test('buildSandboxDocument escapes closing script/style sequences', () => {
+test('buildSandboxDocument escapes closing script/style sequences in raw-text fields', () => {
   const payload = {
     ...basePayload,
     css: "body::after { content: '</style>'; }",
@@ -94,6 +94,18 @@ test('buildSandboxDocument escapes closing script/style sequences', () => {
   // Escaped versions should be present
   assert.ok(doc.includes('<\\/style>'));
   assert.ok(doc.includes('<\\/script>'));
+});
+
+test('buildSandboxDocument does not escape closing script in html field', () => {
+  // html is inserted into <body> and parsed as HTML, not raw text.
+  // Escaping </script> would corrupt valid payloads like
+  // <textarea></script></textarea> or inline <script>...</script> blocks.
+  const payload = {
+    ...basePayload,
+    html: '<textarea></script></textarea>',
+  };
+  const doc = buildSandboxDocument(payload);
+  assert.ok(doc.includes('<textarea></script></textarea>'));
 });
 
 test('hostBridgeClient exposes window.hostBridge.emit', () => {
