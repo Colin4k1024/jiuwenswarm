@@ -274,9 +274,10 @@ async def test_response_prompt_rail_skips_generative_ui_for_non_web_channel(monk
 
 @pytest.mark.asyncio
 async def test_response_prompt_rail_skips_generative_ui_for_non_chat_profile(monkeypatch) -> None:
-    """Code/design/reviewer/single-agent profile 不挂载 generative_ui section.
+    """Code/design/reviewer/single-agent profile should not get generative_ui section.
 
-    这些 profile 不注册 emit_generative_ui 工具，prompt 注入会导致模型调用不存在的工具。
+    These profiles do not register the emit_generative_ui tool, so the prompt
+    injection would cause the model to call a nonexistent tool.
     """
     from types import SimpleNamespace
 
@@ -303,9 +304,9 @@ async def test_response_prompt_rail_skips_generative_ui_for_non_chat_profile(mon
     for profile in ("code.team", "design", "reviewer", "single-agent"):
         rail = ResponsePromptRail()
         rail.system_prompt_builder = _FakePromptBuilder()
-        # Simulate before_invoke storing profile in extra
+        # Simulate a non-chat profile: no emit_generative_ui in tools list
         ctx = SimpleNamespace(
-            inputs={"channel": "web", "profile": profile},
+            inputs={"channel": "web", "tools": []},
             extra={},
         )
         await rail.before_invoke(ctx)
@@ -314,3 +315,44 @@ async def test_response_prompt_rail_skips_generative_ui_for_non_chat_profile(mon
         assert LocalSectionName.GENERATIVE_UI not in rail.system_prompt_builder.sections, (
             f"profile={profile} should not get generative_ui prompt"
         )
+
+
+@pytest.mark.asyncio
+async def test_response_prompt_rail_injects_generative_ui_when_tool_registered(monkeypatch) -> None:
+    """When emit_generative_ui is in the tool list, the prompt section is injected."""
+    from types import SimpleNamespace
+
+    from jiuwenswarm.agents.harness.common.prompt.prompt_builder import LocalSectionName
+    from jiuwenswarm.agents.harness.common.rails.response_prompt_rail import ResponsePromptRail
+    from jiuwenswarm.server.runtime.a2ui.config import A2UIConfig
+
+    class _FakePromptBuilder:
+        def __init__(self) -> None:
+            self.language = "en"
+            self.sections = {}
+
+        def add_section(self, section) -> None:
+            self.sections[section.name] = section
+
+        def remove_section(self, name: str) -> None:
+            self.sections.pop(name, None)
+
+    monkeypatch.setattr(
+        "jiuwenswarm.server.runtime.a2ui.config.get_current_a2ui_config",
+        lambda: A2UIConfig(enabled=True),
+    )
+
+    rail = ResponsePromptRail()
+    rail.system_prompt_builder = _FakePromptBuilder()
+
+    # Simulate chat team profile: emit_generative_ui is in tools list
+    mock_tool = MagicMock()
+    mock_tool.name = "emit_generative_ui"
+    ctx = SimpleNamespace(
+        inputs={"channel": "web", "tools": [mock_tool]},
+        extra={},
+    )
+    await rail.before_invoke(ctx)
+    await rail.before_model_call(ctx)
+
+    assert LocalSectionName.GENERATIVE_UI in rail.system_prompt_builder.sections

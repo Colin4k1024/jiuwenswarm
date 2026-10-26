@@ -74,15 +74,6 @@ class ResponsePromptRail(DeepAgentRail):
             extra[A2UI_BROWSER_WORKFLOW_CONTEXT_KEY] = (
                 is_a2ui_browser_workflow_request(query)
             )
-            # Store profile for before_model_call gating (ModelCallInputs
-            # does not carry profile, so we persist it in extra here).
-            profile = (
-                inputs.get("profile")
-                if isinstance(inputs, dict)
-                else getattr(inputs, "profile", None)
-            )
-            if profile is not None:
-                extra["profile"] = profile
 
     async def before_model_call(self, ctx: AgentCallbackContext) -> None:
         if self.system_prompt_builder is None:
@@ -118,15 +109,21 @@ class ResponsePromptRail(DeepAgentRail):
         (code team, design, reviewer, single-agent) do not register the tool,
         so the prompt must not be injected there to avoid invalid tool calls.
 
-        Reads profile from ``ctx.extra`` (set by ``before_invoke``), because
-        ``ModelCallInputs`` at ``before_model_call`` does not carry profile.
+        Derives the answer from the actual tool list available at
+        ``before_model_call``: if ``emit_generative_ui`` is among the tools,
+        the profile is chat team; otherwise it is not.
         """
-        extra = getattr(ctx, "extra", None)
-        if isinstance(extra, dict):
-            profile = extra.get("profile")
-            if profile is not None:
-                return str(profile) == "chat"
-        return True
+        inputs = getattr(ctx, "inputs", None)
+        if inputs is None:
+            return True
+        if isinstance(inputs, dict):
+            tools = inputs.get("tools")
+        else:
+            tools = getattr(inputs, "tools", None)
+        if tools is None:
+            return True
+        tool_names = {getattr(t, "name", "") for t in tools}
+        return "emit_generative_ui" in tool_names
 
     def _should_skip_a2ui(self, ctx: AgentCallbackContext) -> bool:
         inputs = getattr(ctx, "inputs", None)
