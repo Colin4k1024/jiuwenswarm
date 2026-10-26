@@ -368,7 +368,8 @@ async def test_response_prompt_rail_skips_generative_ui_when_tools_unavailable(m
     """GENERATIVE_UI section is removed when inputs or tools are unavailable.
 
     Covers the production ``ModelCallInputs(tools=None)`` contract where the
-    model call has no registered tools.
+    model call has no registered tools.  The test pre-seeds the section and
+    verifies the remove_section semantics.
     """
     from types import SimpleNamespace
 
@@ -392,15 +393,37 @@ async def test_response_prompt_rail_skips_generative_ui_when_tools_unavailable(m
         lambda: A2UIConfig(enabled=True),
     )
 
+    # Pre-seed the section so we can verify it gets removed.
+    mock_tool = MagicMock()
+    mock_tool.name = "emit_generative_ui"
+
     # Case 1: inputs is None
     rail = ResponsePromptRail()
     rail.system_prompt_builder = _FakePromptBuilder()
+    # First call with tool registered to inject the section.
+    ctx = SimpleNamespace(
+        inputs={"channel": "web", "tools": [mock_tool]},
+        extra={},
+    )
+    await rail.before_invoke(ctx)
+    await rail.before_model_call(ctx)
+    assert LocalSectionName.GENERATIVE_UI in rail.system_prompt_builder.sections
+
+    # Second call with inputs=None should remove the section.
     await rail.before_model_call(SimpleNamespace(inputs=None, extra={}))
     assert LocalSectionName.GENERATIVE_UI not in rail.system_prompt_builder.sections
 
     # Case 2: tools is None (production ModelCallInputs no-tool contract)
     rail = ResponsePromptRail()
     rail.system_prompt_builder = _FakePromptBuilder()
+    ctx = SimpleNamespace(
+        inputs={"channel": "web", "tools": [mock_tool]},
+        extra={},
+    )
+    await rail.before_invoke(ctx)
+    await rail.before_model_call(ctx)
+    assert LocalSectionName.GENERATIVE_UI in rail.system_prompt_builder.sections
+
     await rail.before_model_call(
         SimpleNamespace(inputs={"channel": "web", "tools": None}, extra={})
     )
