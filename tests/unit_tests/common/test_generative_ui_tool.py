@@ -410,7 +410,9 @@ async def test_response_prompt_rail_skips_generative_ui_when_tools_unavailable(m
     assert LocalSectionName.GENERATIVE_UI in rail.system_prompt_builder.sections
 
     # Second call with inputs=None should remove the section.
-    await rail.before_model_call(SimpleNamespace(inputs=None, extra={}))
+    # Reuse ctx.extra so the channel set by before_invoke is preserved,
+    # making the test fail if _is_chat_team_profile regresses to fail-open.
+    await rail.before_model_call(SimpleNamespace(inputs=None, extra=ctx.extra))
     assert LocalSectionName.GENERATIVE_UI not in rail.system_prompt_builder.sections
 
     # Case 2: tools is None (production ModelCallInputs no-tool contract)
