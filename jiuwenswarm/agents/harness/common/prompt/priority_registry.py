@@ -36,6 +36,7 @@ class SystemPromptPriority(IntEnum):
     EXTERNAL_MEMORY = 55
     INPUT = 60
     A2UI = 61
+    GENERATIVE_UI = 62
     OUTPUT = 65
 
     # Workspace and tool-disclosure policy.

@@ -19693,6 +19693,14 @@ class JiuWenSwarmDeepAdapter:
                         **result_payload,
                     }
 
+                if chunk_type == "generative_ui":
+                    if isinstance(payload, dict):
+                        return {
+                            "event_type": "chat.generative_ui",
+                            **payload,
+                        }
+                    return None
+
                 if chunk_type == "error":
                     error_msg = (
                         payload.get("error", str(payload))

@@ -49,6 +49,7 @@ class ResponsePromptRail(DeepAgentRail):
             self.system_prompt_builder.remove_section("input")
             self.system_prompt_builder.remove_section("output")
             self.system_prompt_builder.remove_section(LocalSectionName.A2UI)
+            self.system_prompt_builder.remove_section(LocalSectionName.GENERATIVE_UI)
         self.system_prompt_builder = None
         self._runtime_channel = None
 
@@ -222,7 +223,7 @@ class ResponsePromptRail(DeepAgentRail):
                 )
 
             logger.info(
-                "A2UI prompt decision: request_id=%s conversation_id=%s "
+                "a2ui prompt decision: request_id=%s conversation_id=%s "
                 "channel=%s enabled=%s injected=%s browser_workflows=%s skip_a2ui=%s",
                 request_id or "-",
                 conversation_id or "-",
@@ -234,10 +235,55 @@ class ResponsePromptRail(DeepAgentRail):
             )
         except Exception:
             logger.exception(
-                "Failed to sync A2UI prompt section: request_id=%s "
+                "failed to sync a2ui prompt section: request_id=%s "
                 "conversation_id=%s channel=%s",
                 request_id or "-",
                 conversation_id or "-",
                 channel or "-",
             )
             self.system_prompt_builder.remove_section(LocalSectionName.A2UI)
+
+        self._sync_generative_ui_prompt_section(channel, skip_a2ui=skip_a2ui)
+
+    def _sync_generative_ui_prompt_section(
+        self,
+        channel: str | None,
+        *,
+        skip_a2ui: bool = False,
+    ) -> None:
+        """Inject or remove the generative_ui prompt section from runtime config."""
+        if self.system_prompt_builder is None:
+            return
+
+        try:
+            from jiuwenswarm.server.runtime.a2ui.integration import is_a2ui_channel
+            from jiuwenswarm.server.runtime.a2ui.config import get_current_a2ui_config
+            from jiuwenswarm.server.runtime.a2ui.prompt_instructions_generative_ui import (
+                build_generative_ui_tool_instruction,
+            )
+
+            is_web_channel = is_a2ui_channel(channel)
+            enabled = get_current_a2ui_config().enabled if is_web_channel else False
+            injected = is_web_channel and enabled and not skip_a2ui
+
+            if not injected:
+                self.system_prompt_builder.remove_section(LocalSectionName.GENERATIVE_UI)
+                return
+
+            instruction = build_generative_ui_tool_instruction()
+            self.system_prompt_builder.add_section(
+                PromptSection(
+                    name=LocalSectionName.GENERATIVE_UI,
+                    content={
+                        "cn": instruction,
+                        "en": instruction,
+                    },
+                    priority=PromptPriority.GENERATIVE_UI,
+                )
+            )
+        except Exception:
+            logger.exception(
+                "failed to sync generative_ui prompt section: channel=%s",
+                channel or "-",
+            )
+            self.system_prompt_builder.remove_section(LocalSectionName.GENERATIVE_UI)

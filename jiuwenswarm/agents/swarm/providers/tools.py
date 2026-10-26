@@ -45,6 +45,9 @@ from jiuwenswarm.agents.harness.common.a4p.runtime import is_a4p_enabled
 from jiuwenswarm.agents.harness.common.tools.a4p_tools import (
     get_tools as get_a4p_tools,
 )
+from jiuwenswarm.agents.harness.common.tools.generative_ui_tool import (
+    emit_generative_ui,
+)
 from jiuwenswarm.agents.harness.common.tools.image_tools import generate_image
 from jiuwenswarm.agents.harness.common.tools.multimodal_config import (
     apply_audio_model_config_from_yaml,
@@ -125,6 +128,7 @@ XIAOYI_PHONE = "swarm.xiaoyi_phone"
 SYMPHONY_TOOLKIT = "swarm.symphony_toolkit"
 A4P_INTENT_AUTHORIZATION = "swarm.a4p_intent_authorization"
 CODE_EXTRA_TOOLS = "swarm.code_extra_tools"
+GENERATIVE_UI = "swarm.generative_ui"
 
 # xiaoyi phone tool objects, gated by ``channels.xiaoyi.phone_tools_enabled``.
 _XIAOYI_PHONE_TOOLS = (
@@ -615,6 +619,16 @@ def build_visual_gen_tools(params: dict[str, Any], ctx: SwarmBuildContext) -> li
 def build_xiaoyi_phone(params: dict[str, Any], ctx: SwarmBuildContext) -> list[Any]:
     """Build the whitelist-filtered xiaoyi phone tools."""
     return _filter_whitelist(_build_xiaoyi_phone_tools(ctx))
+
+
+@harness_element(
+    kind=ElementKind.TOOL,
+    name=GENERATIVE_UI,
+    description="Generative UI tool (built only when A2UI channel is enabled).",
+)
+def build_generative_ui_tools(params: dict[str, Any], ctx: SwarmBuildContext) -> list[Any]:
+    """Build the generative UI tool."""
+    return _filter_whitelist([emit_generative_ui])
 
 
 @harness_element(
