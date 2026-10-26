@@ -95,6 +95,30 @@ class ResponsePromptRail(DeepAgentRail):
                 ),
             ),
         )
+        self._sync_generative_ui_prompt_section(
+            self._resolve_channel(ctx),
+            skip_a2ui=self._should_skip_a2ui(ctx),
+            ctx=ctx,
+        )
+
+    def _is_chat_team_profile(self, ctx: AgentCallbackContext) -> bool:
+        """Check if the current context belongs to the chat team profile.
+
+        The generative UI tool is only registered in the chat team profile
+        (``_COMMON_TOOL_NAMES`` in ``config_specs.py``).  Other profiles
+        (code team, design, reviewer, single-agent) do not register the tool,
+        so the prompt must not be injected there to avoid invalid tool calls.
+        """
+        inputs = getattr(ctx, "inputs", None)
+        if isinstance(inputs, dict):
+            profile = inputs.get("profile")
+            if profile is not None:
+                return str(profile) == "chat"
+        else:
+            profile = getattr(inputs, "profile", None)
+            if profile is not None:
+                return str(profile) == "chat"
+        return True
 
     def _should_skip_a2ui(self, ctx: AgentCallbackContext) -> bool:
         inputs = getattr(ctx, "inputs", None)
@@ -243,16 +267,24 @@ class ResponsePromptRail(DeepAgentRail):
             )
             self.system_prompt_builder.remove_section(LocalSectionName.A2UI)
 
-        self._sync_generative_ui_prompt_section(channel, skip_a2ui=skip_a2ui)
-
     def _sync_generative_ui_prompt_section(
         self,
         channel: str | None,
         *,
         skip_a2ui: bool = False,
+        ctx: AgentCallbackContext | None = None,
     ) -> None:
-        """Inject or remove the generative_ui prompt section from runtime config."""
+        """Inject or remove the generative_ui prompt section from runtime config.
+
+        Only injected for the chat team profile where the tool is actually
+        registered.  Other profiles (code, design, reviewer, single-agent)
+        do not register the tool, so the prompt must not be injected there.
+        """
         if self.system_prompt_builder is None:
+            return
+
+        if ctx is not None and not self._is_chat_team_profile(ctx):
+            self.system_prompt_builder.remove_section(LocalSectionName.GENERATIVE_UI)
             return
 
         try:
