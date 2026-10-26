@@ -147,6 +147,7 @@ TOOL_WHITELIST = frozenset({
     "xiaoyi_collection",
     "image_reading",
     "xiaoyi_gui_agent",
+    "emit_generative_ui",
     "web_free_search",
     "web_fetch_webpage",
     "web_paid_search",

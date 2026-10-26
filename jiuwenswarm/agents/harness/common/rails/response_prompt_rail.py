@@ -49,6 +49,7 @@ class ResponsePromptRail(DeepAgentRail):
             self.system_prompt_builder.remove_section("input")
             self.system_prompt_builder.remove_section("output")
             self.system_prompt_builder.remove_section(LocalSectionName.A2UI)
+            self.system_prompt_builder.remove_section(LocalSectionName.GENERATIVE_UI)
         self.system_prompt_builder = None
         self._runtime_channel = None
 
@@ -94,6 +95,35 @@ class ResponsePromptRail(DeepAgentRail):
                 ),
             ),
         )
+        self._sync_generative_ui_prompt_section(
+            self._resolve_channel(ctx),
+            skip_a2ui=self._should_skip_a2ui(ctx),
+            ctx=ctx,
+        )
+
+    def _is_chat_team_profile(self, ctx: AgentCallbackContext) -> bool:
+        """Check if the current context belongs to the chat team profile.
+
+        The generative UI tool is only registered in the chat team profile
+        (``_COMMON_TOOL_NAMES`` in ``config_specs.py``).  Other profiles
+        (code team, design, reviewer, single-agent) do not register the tool,
+        so the prompt must not be injected there to avoid invalid tool calls.
+
+        Derives the answer from the actual tool list available at
+        ``before_model_call``: if ``emit_generative_ui`` is among the tools,
+        the profile is chat team; otherwise it is not.
+        """
+        inputs = getattr(ctx, "inputs", None)
+        if inputs is None:
+            return False
+        if isinstance(inputs, dict):
+            tools = inputs.get("tools")
+        else:
+            tools = getattr(inputs, "tools", None)
+        if tools is None:
+            return False
+        tool_names = {getattr(t, "name", "") for t in tools}
+        return "emit_generative_ui" in tool_names
 
     def _should_skip_a2ui(self, ctx: AgentCallbackContext) -> bool:
         inputs = getattr(ctx, "inputs", None)
@@ -222,7 +252,7 @@ class ResponsePromptRail(DeepAgentRail):
                 )
 
             logger.info(
-                "A2UI prompt decision: request_id=%s conversation_id=%s "
+                "a2ui prompt decision: request_id=%s conversation_id=%s "
                 "channel=%s enabled=%s injected=%s browser_workflows=%s skip_a2ui=%s",
                 request_id or "-",
                 conversation_id or "-",
@@ -234,10 +264,63 @@ class ResponsePromptRail(DeepAgentRail):
             )
         except Exception:
             logger.exception(
-                "Failed to sync A2UI prompt section: request_id=%s "
+                "failed to sync a2ui prompt section: request_id=%s "
                 "conversation_id=%s channel=%s",
                 request_id or "-",
                 conversation_id or "-",
                 channel or "-",
             )
             self.system_prompt_builder.remove_section(LocalSectionName.A2UI)
+
+    def _sync_generative_ui_prompt_section(
+        self,
+        channel: str | None,
+        *,
+        skip_a2ui: bool = False,
+        ctx: AgentCallbackContext | None = None,
+    ) -> None:
+        """Inject or remove the generative_ui prompt section from runtime config.
+
+        Only injected for the chat team profile where the tool is actually
+        registered.  Other profiles (code, design, reviewer, single-agent)
+        do not register the tool, so the prompt must not be injected there.
+        """
+        if self.system_prompt_builder is None:
+            return
+
+        if ctx is not None and not self._is_chat_team_profile(ctx):
+            self.system_prompt_builder.remove_section(LocalSectionName.GENERATIVE_UI)
+            return
+
+        try:
+            from jiuwenswarm.server.runtime.a2ui.integration import is_a2ui_channel
+            from jiuwenswarm.server.runtime.a2ui.config import get_current_a2ui_config
+            from jiuwenswarm.server.runtime.a2ui.prompt_instructions_generative_ui import (
+                build_generative_ui_tool_instruction,
+            )
+
+            is_web_channel = is_a2ui_channel(channel)
+            enabled = get_current_a2ui_config().enabled if is_web_channel else False
+            injected = is_web_channel and enabled and not skip_a2ui
+
+            if not injected:
+                self.system_prompt_builder.remove_section(LocalSectionName.GENERATIVE_UI)
+                return
+
+            instruction = build_generative_ui_tool_instruction()
+            self.system_prompt_builder.add_section(
+                PromptSection(
+                    name=LocalSectionName.GENERATIVE_UI,
+                    content={
+                        "cn": instruction,
+                        "en": instruction,
+                    },
+                    priority=PromptPriority.GENERATIVE_UI,
+                )
+            )
+        except Exception:
+            logger.exception(
+                "failed to sync generative_ui prompt section: channel=%s",
+                channel or "-",
+            )
+            self.system_prompt_builder.remove_section(LocalSectionName.GENERATIVE_UI)

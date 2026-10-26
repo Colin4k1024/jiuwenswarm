@@ -28,6 +28,7 @@ class PromptPriority(IntEnum):
     MEMORY = SystemPromptPriority.MEMORY
     INPUT = SystemPromptPriority.INPUT
     A2UI = SystemPromptPriority.A2UI
+    GENERATIVE_UI = SystemPromptPriority.GENERATIVE_UI
     OUTPUT = SystemPromptPriority.OUTPUT
     WORKSPACE = SystemPromptPriority.WORKSPACE
     TODO = SystemPromptPriority.TODO
@@ -37,6 +38,7 @@ class LocalSectionName:
     """Local section names for optional JiuwenSwarm prompt sections."""
 
     A2UI = "a2ui"
+    GENERATIVE_UI = "generative_ui"
 
 
 def _identity_prompt(language: str) -> PromptSection:
