@@ -1,4 +1,4 @@
-import React, { forwardRef, useMemo, useState } from 'react';
+import { forwardRef, useMemo, useState } from 'react';
 import { buildSandboxDocument } from './buildSandboxDocument';
 import { GENERATIVE_UI_SANDBOX } from './csp';
 import type { GenerativeUIArtifactPayload } from './types';
@@ -46,9 +46,16 @@ export const GenerativeUIArtifact = forwardRef<HTMLIFrameElement, GenerativeUIAr
     };
 
     return (
-      <div className="generative-ui-artifact" data-artifact-id={artifact_id}>
+      <div
+        className="generative-ui-artifact"
+        data-artifact-id={artifact_id}
+        data-testid="generative-ui-artifact"
+      >
         {!isLoaded && placeholder_messages.length > 0 && (
-          <div className="generative-ui-artifact__placeholder">
+          <div
+            className="generative-ui-artifact__placeholder"
+            data-testid="generative-ui-placeholder"
+          >
             {placeholder_messages[0]}
           </div>
         )}
@@ -57,6 +64,7 @@ export const GenerativeUIArtifact = forwardRef<HTMLIFrameElement, GenerativeUIAr
           sandbox={GENERATIVE_UI_SANDBOX}
           srcDoc={srcDoc}
           title={title ?? 'generative-ui-artifact'}
+          data-testid="generative-ui-frame"
           style={{
             width: '100%',
             height: `${initial_height}px`,

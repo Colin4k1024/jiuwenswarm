@@ -78,6 +78,24 @@ test('buildSandboxDocument includes all 6 fixed parameters', () => {
   assert.ok(doc.includes('test-artifact-1'));
 });
 
+test('buildSandboxDocument escapes closing script/style sequences', () => {
+  const payload = {
+    ...basePayload,
+    css: "body::after { content: '</style>'; }",
+    js_functions: "function make() { return '</script>'; }",
+    js_expressions: "console.log('</script>');",
+  };
+  const doc = buildSandboxDocument(payload);
+  // The literal closing sequences must be escaped so the HTML parser
+  // does not terminate the style/script elements early.
+  assert.ok(!doc.includes("content: '</style>'"));
+  assert.ok(!doc.includes("return '</script>'"));
+  assert.ok(!doc.includes("console.log('</script>')"));
+  // Escaped versions should be present
+  assert.ok(doc.includes('<\\/style>'));
+  assert.ok(doc.includes('<\\/script>'));
+});
+
 test('hostBridgeClient exposes window.hostBridge.emit', () => {
   assert.ok(HOST_BRIDGE_CLIENT_SCRIPT.includes('window.hostBridge'));
   assert.ok(HOST_BRIDGE_CLIENT_SCRIPT.includes('emit'));
