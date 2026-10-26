@@ -361,3 +361,47 @@ async def test_response_prompt_rail_injects_generative_ui_when_tool_registered(m
     await rail.before_model_call(ctx)
 
     assert LocalSectionName.GENERATIVE_UI in rail.system_prompt_builder.sections
+
+
+@pytest.mark.asyncio
+async def test_response_prompt_rail_skips_generative_ui_when_tools_unavailable(monkeypatch) -> None:
+    """GENERATIVE_UI section is removed when inputs or tools are unavailable.
+
+    Covers the production ``ModelCallInputs(tools=None)`` contract where the
+    model call has no registered tools.
+    """
+    from types import SimpleNamespace
+
+    from jiuwenswarm.agents.harness.common.prompt.prompt_builder import LocalSectionName
+    from jiuwenswarm.agents.harness.common.rails.response_prompt_rail import ResponsePromptRail
+    from jiuwenswarm.server.runtime.a2ui.config import A2UIConfig
+
+    class _FakePromptBuilder:
+        def __init__(self) -> None:
+            self.language = "en"
+            self.sections = {}
+
+        def add_section(self, section) -> None:
+            self.sections[section.name] = section
+
+        def remove_section(self, name: str) -> None:
+            self.sections.pop(name, None)
+
+    monkeypatch.setattr(
+        "jiuwenswarm.server.runtime.a2ui.config.get_current_a2ui_config",
+        lambda: A2UIConfig(enabled=True),
+    )
+
+    # Case 1: inputs is None
+    rail = ResponsePromptRail()
+    rail.system_prompt_builder = _FakePromptBuilder()
+    await rail.before_model_call(SimpleNamespace(inputs=None, extra={}))
+    assert LocalSectionName.GENERATIVE_UI not in rail.system_prompt_builder.sections
+
+    # Case 2: tools is None (production ModelCallInputs no-tool contract)
+    rail = ResponsePromptRail()
+    rail.system_prompt_builder = _FakePromptBuilder()
+    await rail.before_model_call(
+        SimpleNamespace(inputs={"channel": "web", "tools": None}, extra={})
+    )
+    assert LocalSectionName.GENERATIVE_UI not in rail.system_prompt_builder.sections
