@@ -558,6 +558,7 @@ class EventType(Enum):
     CHAT_TOOL_CALL = "chat.tool_call"
     CHAT_TOOL_UPDATE = "chat.tool_update"
     CHAT_TOOL_RESULT = "chat.tool_result"
+    CHAT_GENERATIVE_UI = "chat.generative_ui"
     CHAT_SYMPHONY_STATUS = "chat.symphony_status"
     CHAT_MESSAGE_UPDATED = "chat.message_updated"
     CONTEXT_USAGE = "context.usage"
@@ -700,3 +701,75 @@ class Message:
     group_digital_avatar: bool = False
     enable_memory: bool | None = None
     enable_streaming: bool = True
+
+
+@dataclass(frozen=True)
+class GenerativeUIArtifactPayload:
+    """chat.generative_ui 事件的负载.
+
+    对齐 OpenIntelligentUI ``generateSandboxedUi`` 的 6 参数固定契约:
+    ``initial_height -> placeholder_messages -> css -> html -> js_functions -> js_expressions``.
+    每次 ``emit_generative_ui`` 工具调用生成独立的 ``artifact_id``,
+    不支持跨调用 patch (与 OpenIntelligentUI 语义一致).
+    """
+
+    artifact_id: str
+    initial_height: int
+    placeholder_messages: list[str]
+    css: str
+    html: str
+    js_functions: str
+    js_expressions: str
+    title: str | None = None
+    description: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """序列化为可 JSON 化的 dict (字段顺序与 dataclass 声明一致)."""
+        return {
+            "artifact_id": self.artifact_id,
+            "initial_height": self.initial_height,
+            "placeholder_messages": list(self.placeholder_messages),
+            "css": self.css,
+            "html": self.html,
+            "js_functions": self.js_functions,
+            "js_expressions": self.js_expressions,
+            "title": self.title,
+            "description": self.description,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "GenerativeUIArtifactPayload":
+        """从 dict 反序列化. 缺任一必填字段或字段类型不符时抛错."""
+        if not isinstance(data, dict):
+            raise TypeError(f"GenerativeUIArtifactPayload.from_dict expects dict, got {type(data).__name__}")
+        required = (
+            "artifact_id",
+            "initial_height",
+            "placeholder_messages",
+            "css",
+            "html",
+            "js_functions",
+            "js_expressions",
+        )
+        for key in required:
+            if key not in data:
+                raise ValueError(f"GenerativeUIArtifactPayload missing required field: {key}")
+        initial_height = data["initial_height"]
+        if not isinstance(initial_height, int) or isinstance(initial_height, bool):
+            raise ValueError(f"initial_height must be int, got {type(initial_height).__name__}")
+        placeholder_messages = data["placeholder_messages"]
+        if not isinstance(placeholder_messages, list) or not all(
+            isinstance(item, str) for item in placeholder_messages
+        ):
+            raise ValueError("placeholder_messages must be list[str]")
+        return cls(
+            artifact_id=data["artifact_id"],
+            initial_height=initial_height,
+            placeholder_messages=list(placeholder_messages),
+            css=data["css"],
+            html=data["html"],
+            js_functions=data["js_functions"],
+            js_expressions=data["js_expressions"],
+            title=data.get("title"),
+            description=data.get("description"),
+        )
