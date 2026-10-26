@@ -74,6 +74,15 @@ class ResponsePromptRail(DeepAgentRail):
             extra[A2UI_BROWSER_WORKFLOW_CONTEXT_KEY] = (
                 is_a2ui_browser_workflow_request(query)
             )
+            # Store profile for before_model_call gating (ModelCallInputs
+            # does not carry profile, so we persist it in extra here).
+            profile = (
+                inputs.get("profile")
+                if isinstance(inputs, dict)
+                else getattr(inputs, "profile", None)
+            )
+            if profile is not None:
+                extra["profile"] = profile
 
     async def before_model_call(self, ctx: AgentCallbackContext) -> None:
         if self.system_prompt_builder is None:
@@ -108,14 +117,13 @@ class ResponsePromptRail(DeepAgentRail):
         (``_COMMON_TOOL_NAMES`` in ``config_specs.py``).  Other profiles
         (code team, design, reviewer, single-agent) do not register the tool,
         so the prompt must not be injected there to avoid invalid tool calls.
+
+        Reads profile from ``ctx.extra`` (set by ``before_invoke``), because
+        ``ModelCallInputs`` at ``before_model_call`` does not carry profile.
         """
-        inputs = getattr(ctx, "inputs", None)
-        if isinstance(inputs, dict):
-            profile = inputs.get("profile")
-            if profile is not None:
-                return str(profile) == "chat"
-        else:
-            profile = getattr(inputs, "profile", None)
+        extra = getattr(ctx, "extra", None)
+        if isinstance(extra, dict):
+            profile = extra.get("profile")
             if profile is not None:
                 return str(profile) == "chat"
         return True
