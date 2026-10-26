@@ -117,6 +117,7 @@
 | `components/subagent` | `subagent` | 子代理面板(紧凑/展开);列表+详情;活动列表 |
 | `components/AgentManagementPanel` | `agent-management` | Agent 管理面板;tabs+搜索+创建菜单 |
 | `components/SessionsPanel` | `sessions-panel` | 会话列表面板 |
+| `features/generativeUI` | `generative-ui` | 生成式 UI 沙箱产物 |
 | `components/SessionSidebar` | `session-sidebar` | 会话侧边栏(新建/切换/重命名) |
 | `multi-session` | `multi-session` | 多会话路由;聊天路由 |
 | `components/TeamPanel` | `team-panel` | 团队面板 |
