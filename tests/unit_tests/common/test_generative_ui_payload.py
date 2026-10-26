@@ -98,6 +98,49 @@ def test_from_dict_rejects_wrong_type_placeholder_messages() -> None:
         GenerativeUIArtifactPayload.from_dict(kwargs)
 
 
+@pytest.mark.parametrize(
+    "bad_key",
+    ["artifact_id", "css", "html", "js_functions", "js_expressions"],
+)
+def test_from_dict_rejects_non_str_required_str_fields(bad_key: str) -> None:
+    """artifact_id / css / html / js_functions / js_expressions 必须是 str.
+
+    Codex P2 复审覆盖: 防止非 str 值 (None / list / object / int) 静默通过
+    后导致 json.dumps(to_dict()) 抛 TypeError 或渲染器收到错误类型.
+    """
+    kwargs = _full_kwargs()
+    for bad_value in (None, 123, ["x"], object(), b"bytes"):
+        kwargs[bad_key] = bad_value  # type: ignore[assignment]
+        with pytest.raises((TypeError, ValueError)):
+            GenerativeUIArtifactPayload.from_dict(kwargs)
+
+
+@pytest.mark.parametrize("bad_key", ["title", "description"])
+def test_from_dict_rejects_non_str_optional_metadata(bad_key: str) -> None:
+    """title / description 必须是 str | None, 其他类型拒绝."""
+    kwargs = _full_kwargs()
+    for bad_value in (123, ["x"], object(), b"bytes"):
+        kwargs[bad_key] = bad_value  # type: ignore[assignment]
+        with pytest.raises((TypeError, ValueError)):
+            GenerativeUIArtifactPayload.from_dict(kwargs)
+
+
+def test_from_dict_rejects_bool_initial_height() -> None:
+    """bool 是 int 子类, 但语义上不是合法的 iframe 高度; 必须显式拒绝."""
+    kwargs = _full_kwargs()
+    kwargs["initial_height"] = True  # type: ignore[assignment]
+    with pytest.raises((TypeError, ValueError)):
+        GenerativeUIArtifactPayload.from_dict(kwargs)
+
+
+def test_to_dict_output_is_json_serializable() -> None:
+    """to_dict 输出必须可直接 json.dumps (与 to_dict docstring 承诺一致)."""
+    import json
+
+    payload = GenerativeUIArtifactPayload(**_full_kwargs())
+    json.dumps(payload.to_dict())
+
+
 def test_payload_six_params_order_documented() -> None:
     """to_dict 输出的 key 集合必须包含 OpenIntelligentUI 6 个固定参数."""
     payload = GenerativeUIArtifactPayload(**_full_kwargs())

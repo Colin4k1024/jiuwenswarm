@@ -762,6 +762,22 @@ class GenerativeUIArtifactPayload:
             isinstance(item, str) for item in placeholder_messages
         ):
             raise ValueError("placeholder_messages must be list[str]")
+        required_str_fields = (
+            "artifact_id",
+            "css",
+            "html",
+            "js_functions",
+            "js_expressions",
+        )
+        for key in required_str_fields:
+            value = data[key]
+            if not isinstance(value, str):
+                raise ValueError(f"{key} must be str, got {type(value).__name__}")
+        optional_str_fields = ("title", "description")
+        for key in optional_str_fields:
+            value = data.get(key)
+            if value is not None and not isinstance(value, str):
+                raise ValueError(f"{key} must be str | None, got {type(value).__name__}")
         return cls(
             artifact_id=data["artifact_id"],
             initial_height=initial_height,
