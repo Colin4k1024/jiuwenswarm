@@ -233,7 +233,12 @@ async def test_response_prompt_rail_mounts_generative_ui_section(monkeypatch) ->
     rail = ResponsePromptRail()
     rail.system_prompt_builder = _FakePromptBuilder()
 
-    await rail.before_model_call(SimpleNamespace(inputs={"channel": "web"}))
+    # Simulate chat team profile: emit_generative_ui is in tools list
+    mock_tool = MagicMock()
+    mock_tool.name = "emit_generative_ui"
+    await rail.before_model_call(
+        SimpleNamespace(inputs={"channel": "web", "tools": [mock_tool]})
+    )
 
     assert LocalSectionName.GENERATIVE_UI in rail.system_prompt_builder.sections
     content = rail.system_prompt_builder.sections[LocalSectionName.GENERATIVE_UI].content

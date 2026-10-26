@@ -115,13 +115,13 @@ class ResponsePromptRail(DeepAgentRail):
         """
         inputs = getattr(ctx, "inputs", None)
         if inputs is None:
-            return True
+            return False
         if isinstance(inputs, dict):
             tools = inputs.get("tools")
         else:
             tools = getattr(inputs, "tools", None)
         if tools is None:
-            return True
+            return False
         tool_names = {getattr(t, "name", "") for t in tools}
         return "emit_generative_ui" in tool_names
 
